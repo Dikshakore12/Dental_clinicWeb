@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ✨ Global Dental Theme Styles */
+body {
+  @apply bg-dental-light text-dental-text font-sans;
+}
+
+/* Optional: Smooth scroll and transitions */
+html {
+  scroll-behavior: smooth;
+}
+
+* {
+  transition: all 0.3s ease-in-out;
+}
+
+/* Optional: Dental-themed buttons */
+.btn-dental {
+  @apply bg-dental-primary text-white px-4 py-2 rounded-dental shadow-dental hover:bg-dental-secondary;
+}

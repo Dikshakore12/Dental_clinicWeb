@@ -1,0 +1,523 @@
+import React, { useState, useEffect } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+
+const Appts = () => {
+  const [apts, setApts] = useState([]);
+  const [patients, setPatients] = useState([]);
+  const [srch, setSrch] = useState('');
+  const [showF, setShowF] = useState(false);
+  const [edit, setEdit] = useState(null);
+  const [view, setView] = useState(null);
+  const [showDel, setShowDel] = useState(false);
+  const [delId, setDelId] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [patientPhone, setPatientPhone] = useState('');
+
+  useEffect(() => {
+    const savedApts = localStorage.getItem('appointments');
+    if (savedApts) {
+      setApts(JSON.parse(savedApts));
+    }
+    
+    // Load patients from localStorage
+    const savedPatients = localStorage.getItem('patients');
+    if (savedPatients) {
+      setPatients(JSON.parse(savedPatients));
+    }
+  }, []);
+
+  const editApt = (id) => {
+    const apt = apts.find(a => a.id === id);
+    setEdit(apt);
+    setFiles(apt.files || []);
+    setShowF(true);
+  };
+
+  const viewApt = (id) => {
+    const apt = apts.find(a => a.id === id);
+    setView(apt);
+  };
+
+  const delApt = (id) => {
+    setDelId(id);
+    setShowDel(true);
+  };
+
+  const confDel = () => {
+    const newApts = apts.filter(a => a.id !== delId);
+    setApts(newApts);
+    localStorage.setItem('appointments', JSON.stringify(newApts));
+    setShowDel(false);
+    setDelId(null);
+  };
+
+  const add = () => {
+    setEdit(null);
+    setFiles([]);
+    setShowF(true);
+  };
+
+  const fileChg = (e) => {
+    const newFiles = [];
+    for (let i = 0; i < e.target.files.length; i++) {
+      const file = e.target.files[i];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        newFiles.push({
+          name: file.name,
+          url: event.target.result,
+        });
+        if (newFiles.length === e.target.files.length) {
+          setFiles([...files, ...newFiles]);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const remFile = (index) => {
+    const newFiles = [...files];
+    newFiles.splice(index, 1);
+    setFiles(newFiles);
+  };
+
+  const remAptFile = (aptId, fileIndex) => {
+    const apt = apts.find(a => a.id === aptId);
+    if (apt && apt.files) {
+      const newFiles = [...apt.files];
+      newFiles.splice(fileIndex, 1);
+      const newApts = apts.map(a => {
+        if (a.id === aptId) {
+          return { ...a, files: newFiles };
+        }
+        return a;
+      });
+      setApts(newApts);
+      localStorage.setItem('appointments', JSON.stringify(newApts));
+    }
+  };
+
+  const sendWhatsAppNotification = (phone, appointment) => {
+    // Format the appointment date
+    const appointmentDate = new Date(appointment.appointmentDate);
+    const formattedDate = appointmentDate.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+    
+    // Format the appointment time
+    const formattedTime = appointmentDate.toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    // Google Maps location link
+    const locationLink = 'https://maps.app.goo.gl/v89kwnHYXe6YhP5t6';
+    
+    // Create the message
+    const message = `Dear Patient, your appointment for ${appointment.treatment} has been scheduled at Dr. Asrani Dental Clinic on ${formattedDate} at ${formattedTime}. Please arrive 10 minutes early. For any queries, contact us at +919767368738.\n\nClinic Location: ${locationLink}`;
+    
+    // Format phone number for WhatsApp
+    let whatsappPhone = "919767368738"; // Default to clinic number
+    
+    if (phone) {
+      // Remove any non-digit characters
+      const digits = phone.replace(/\D/g, '');
+      
+      if (digits.length > 0) {
+        // If it's a 10-digit number (Indian format without country code)
+        if (digits.length === 10) {
+          whatsappPhone = `91${digits}`;
+        } else {
+          // For any other case, just use the digits
+          whatsappPhone = digits;
+        }
+      }
+    }
+    
+    // Use direct URL with encoded parameters - this works better for unsaved numbers
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Try the direct URL approach which works better for unsaved numbers
+    window.location.href = `whatsapp://send?phone=${whatsappPhone}&text=${encodedMessage}`;
+  };
+
+  const sub = (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const newApt = {
+      patientId: form.patientId.value,
+      title: form.title.value,
+      description: form.description.value,
+      comments: form.comments.value,
+      appointmentDate: form.appointmentDate.value,
+      cost: form.cost.value,
+      treatment: form.treatment.value,
+      status: form.status.value,
+      nextDate: form.nextDate.value,
+      files: files,
+      patientPhone: form.patientPhone.value, // Add patient phone
+      paymentStatus: form.paymentStatus.value, // Add payment status
+      paidAmount: form.paidAmount.value || '0', // Add paid amount
+      pendingAmount: (parseFloat(form.cost.value) - parseFloat(form.paidAmount.value || 0)).toString() // Calculate pending amount
+    };
+
+    let savedAppointment;
+    
+    if (edit) {
+      const newApts = apts.map(a => {
+        if (a.id === edit.id) {
+          savedAppointment = { ...newApt, id: a.id };
+          return savedAppointment;
+        }
+        return a;
+      });
+      setApts(newApts);
+      localStorage.setItem('appointments', JSON.stringify(newApts));
+    } else {
+      savedAppointment = { ...newApt, id: uuidv4() };
+      const newApts = [...apts, savedAppointment];
+      setApts(newApts);
+      localStorage.setItem('appointments', JSON.stringify(newApts));
+    }
+
+    // Send WhatsApp notification if phone number is provided
+    if (form.patientPhone.value && form.sendWhatsApp.checked) {
+      sendWhatsAppNotification(form.patientPhone.value, savedAppointment);
+    }
+
+    setShowF(false);
+    setEdit(null);
+    setFiles([]);
+    setPatientPhone('');
+  };
+
+  const fApts = apts
+    .filter(a => a.patientId.toLowerCase().includes(srch.toLowerCase()) || a.title.toLowerCase().includes(srch.toLowerCase()))
+    .sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-6 px-4 md:px-6">
+      <div className="max-w-5xl mx-auto">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6 gap-4">
+          <h2 className="text-xl font-bold text-gray-800">Appointments</h2>
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="relative flex-1 md:w-64">
+              <input
+                type="text"
+                placeholder="Search appointments"
+                value={srch}
+                onChange={e => setSrch(e.target.value)}
+                className="w-full pl-9 pr-3 py-2 rounded-md border border-gray-300 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none bg-white text-gray-700 placeholder:text-gray-400 transition text-sm"
+              />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" fill="none"/>
+                  <line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={add}
+          className="fixed bottom-8 right-8 z-50 dental-btn dental-btn-primary dental-slide-up flex items-center gap-2 px-4 py-2 text-sm font-medium"
+          title="Add Appointment"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <span>Add Appointment</span>
+        </button>
+
+        {showF && (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm z-50">
+            <form onSubmit={sub} className="bg-white rounded-lg shadow-lg w-full max-w-md space-y-4 relative border border-gray-100 p-0" style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+              <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-white">{edit ? 'Edit Appointment' : 'New Appointment'}</h3>
+                <button type="button" onClick={() => setShowF(false)} className="text-white text-2xl font-medium hover:text-gray-200 transition" title="Close">&times;</button>
+              </div>
+              
+              <div className="px-6 py-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        placeholder="Search patient by name or ID" 
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition mb-1"
+                        onChange={(e) => {
+                          // Show dropdown when typing
+                          const dropdown = document.getElementById('patientDropdown');
+                          dropdown.style.display = e.target.value ? 'block' : 'none';
+                          
+                          // Filter patients based on search
+                          const searchTerm = e.target.value.toLowerCase();
+                          const filteredPatients = patients.filter(patient => 
+                            patient.name?.toLowerCase().includes(searchTerm) || 
+                            patient.patientId?.toLowerCase().includes(searchTerm) ||
+                            patient.id?.toLowerCase().includes(searchTerm)
+                          );
+                          
+                          // Update dropdown options
+                          const dropdown_content = document.getElementById('patientDropdownContent');
+                          dropdown_content.innerHTML = '';
+                          
+                          filteredPatients.forEach(patient => {
+                            const option = document.createElement('div');
+                            option.className = 'px-3 py-2 hover:bg-blue-100 cursor-pointer';
+                            option.textContent = `${patient.name} (${patient.patientId || patient.id})`;
+                            option.onclick = () => {
+                              document.getElementsByName('patientId')[0].value = patient.patientId || patient.id;
+                              document.getElementById('patientSearchInput').value = `${patient.name} (${patient.patientId || patient.id})`;
+                              dropdown.style.display = 'none';
+                            };
+                            dropdown_content.appendChild(option);
+                          });
+                        }}
+                        id="patientSearchInput"
+                      />
+                      <select 
+                        name="patientId" 
+                        defaultValue={edit?.patientId || ''} 
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"
+                        onChange={(e) => {
+                          // Update search input when select changes
+                          const selectedPatient = patients.find(p => (p.patientId || p.id) === e.target.value);
+                          if (selectedPatient) {
+                            document.getElementById('patientSearchInput').value = `${selectedPatient.name} (${selectedPatient.patientId || selectedPatient.id})`;
+                          }
+                        }}
+                        required
+                      >
+                        <option value="">Select a patient</option>
+                        {patients.map(patient => (
+                          <option key={patient.id} value={patient.patientId || patient.id}>
+                            {patient.name} ({patient.patientId || patient.id})
+                          </option>
+                        ))}
+                      </select>
+                      <div 
+                        id="patientDropdown" 
+                        className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base overflow-auto focus:outline-none sm:text-sm"
+                        style={{display: 'none'}}
+                      >
+                        <div id="patientDropdownContent"></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                    <input type="text" name="title" placeholder="Appointment title" defaultValue={edit?.title || ''} className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" required />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <textarea name="description" placeholder="Appointment description" defaultValue={edit?.description || ''} className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"></textarea>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Comments</label>
+                    <textarea name="comments" placeholder="Additional comments" defaultValue={edit?.comments || ''} className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition"></textarea>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Patient Phone</label>
+                    <input type="text" name="patientPhone" placeholder="e.g., 9767368738 (without country code)" defaultValue={edit?.patientPhone || patientPhone} onChange={(e) => setPatientPhone(e.target.value)} className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Appointment Date</label>
+                    <input type="datetime-local" name="appointmentDate" defaultValue={edit?.appointmentDate || ''} className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" required />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Cost</label>
+                    <input type="number" name="cost" placeholder="₹0.00" defaultValue={edit?.cost || ''} className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Paid Amount</label>
+                    <input type="number" name="paidAmount" placeholder="₹0.00" defaultValue={edit?.paidAmount || '0'} className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Payment Status</label>
+                    <select name="paymentStatus" defaultValue={edit?.paymentStatus || 'pending'} className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                      <option value="pending">Pending</option>
+                      <option value="partial">Partially Paid</option>
+                      <option value="completed">Fully Paid</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Treatment</label>
+                    <input type="text" name="treatment" placeholder="Treatment type" defaultValue={edit?.treatment || ''} className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select name="status" defaultValue={edit?.status || 'Pending'} className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition">
+                      <option value="Pending">Pending</option>
+                      <option value="Completed">Completed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Next Appointment</label>
+                    <input type="date" name="nextDate" defaultValue={edit?.nextDate || ''} className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Attachments</label>
+                    <input type="file" className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition" multiple onChange={fileChg} />
+                    {files.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">{files.map((f, i) => (
+                        <span key={i} className="flex items-center bg-blue-50 px-2 py-1 rounded-md text-sm">
+                          <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline mr-2">{f.name}</a>
+                          <button type="button" onClick={() => remFile(i)} className="ml-1 text-red-500 hover:text-red-700" title="Remove file">×</button>
+                        </span>))}
+                      </div>)}
+                  </div>
+                  <div className="md:col-span-2">
+                    <div className="flex items-center">
+                      <input type="checkbox" id="sendWhatsApp" name="sendWhatsApp" defaultChecked className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                      <label htmlFor="sendWhatsApp" className="ml-2 block text-sm text-gray-700">Send WhatsApp notification to patient</label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t">
+                <button type="button" onClick={() => setShowF(false)} className="px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition font-medium text-sm">Cancel</button>
+                <button type="submit" className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition font-medium text-sm">Save</button>
+              </div>
+            </form>
+          </div>
+        )}
+
+        {view && (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm z-50">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-lg relative border border-gray-100 p-0">
+              <div className="bg-blue-600 px-6 py-4 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-white">Appointment Details</h3>
+                <button
+                  className="text-white text-2xl font-medium hover:text-gray-200 transition"
+                  onClick={() => setView(null)}
+                  title="Close"
+                >
+                  &times;
+                </button>
+              </div>
+              
+              <div className="px-6 py-6 space-y-4 text-gray-700">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-900">Date:</span>
+                  <span className="inline-block text-xs font-medium text-blue-700 bg-blue-50 px-2 py-1 rounded-md">
+                    {(() => {
+                      const d = new Date(view.appointmentDate);
+                      const day = String(d.getDate()).padStart(2, '0');
+                      const month = String(d.getMonth() + 1).padStart(2, '0');
+                      const year = String(d.getFullYear()).slice(-2);
+                      return `${day}/${month}/${year}`;
+                    })()}
+                  </span>
+                </div>
+                <div><span className="font-medium text-gray-900">Patient ID:</span> {view.patientId}</div>
+                <div><span className="font-medium text-gray-900">Title:</span> {view.title}</div>
+                <div><span className="font-medium text-gray-900">Status:</span> {view.status}</div>
+                <div><span className="font-medium text-gray-900">Cost:</span> ₹ {view.cost}</div>
+                <div><span className="font-medium text-gray-900">Treatment:</span> {view.treatment}</div>
+                <div><span className="font-medium text-gray-900">Description:</span> {view.description}</div>
+                <div><span className="font-medium text-gray-900">Comments:</span> {view.comments}</div>
+                <div><span className="font-medium text-gray-900">Next Date:</span> {view.nextDate}</div>
+                {view.files && view.files.length > 0 && (
+                  <div>
+                    <span className="font-medium text-gray-900">File:</span>{' '}
+                    <a
+                      href={view.files[0].url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {view.files[0].name}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+
+        {showDel && (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-900/50 backdrop-blur-sm z-50">
+            <div className="bg-white rounded-lg shadow-lg p-6 min-w-[320px] max-w-sm text-center relative border border-gray-100">
+              <h3 className="text-xl font-bold mb-4 text-gray-900">Delete Appointment</h3>
+              <p className="mb-6 text-gray-700">Are you sure you want to delete this appointment?</p>
+              <div className="flex justify-center gap-3">
+                <button className="px-4 py-2 rounded-md bg-red-600 text-white hover:bg-red-700 transition font-medium text-sm" onClick={confDel}>Delete</button>
+                <button className="px-4 py-2 rounded-md border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition font-medium text-sm" onClick={() => { setShowDel(false); setDelId(null); }}>Cancel</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="grid gap-6 md:grid-cols-2 mt-8">
+          {fApts.length === 0 ? (
+            <div className="col-span-2 text-center text-gray-400 text-lg py-12">No appointments available.</div>
+          ) : fApts.map((a) => (
+            <div key={a.id} className="bg-white rounded-lg shadow-md p-5 flex flex-col gap-3 relative hover:shadow-lg transition border border-gray-100 w-full max-w-full box-border overflow-x-auto md:min-w-[340px] md:max-w-[420px] md:mx-auto">
+              <div className="flex justify-between items-center">
+                <div>
+                  <div className="text-lg font-bold text-gray-900">{a.title}</div>
+                  <div className="inline-block text-xs font-medium text-blue-700 bg-blue-50 px-2 py-1 rounded-md mt-1 mb-1">{(() => {
+                    const d = new Date(a.appointmentDate);
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const year = String(d.getFullYear()).slice(-2);
+                    let h = d.getHours();
+                    const m = String(d.getMinutes()).padStart(2, '0');
+                    const ampm = h >= 12 ? 'PM' : 'AM';
+                    h = h % 12;
+                    h = h ? h : 12;
+                    return `${day}/${month}/${year} ${h}:${m} ${ampm}`;
+                  })()}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => viewApt(a.id)} className="text-blue-600 hover:text-blue-800 transition" title="View">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  </button>
+                  <button onClick={() => editApt(a.id)} className="text-gray-600 hover:text-gray-800 transition" title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button onClick={() => delApt(a.id)} className="text-red-600 hover:text-red-800 transition" title="Delete">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div className="text-sm text-gray-600"><span className="font-medium text-gray-900">Patient ID:</span> {a.patientId}</div>
+              <div className="text-sm text-gray-600"><span className="font-medium text-gray-900">Status:</span> <span className={`${a.status === 'Completed' ? 'text-green-600' : 'text-yellow-600'}`}>{a.status}</span></div>
+              <div className="text-sm text-gray-600"><span className="font-medium text-gray-900">Cost:</span> ₹ {a.cost}</div>
+              <div className="text-sm text-gray-600"><span className="font-medium text-gray-900">Treatment:</span> {a.treatment}</div>
+              {a.files && a.files.length > 0 && (
+                <div className="text-sm text-gray-600">
+                  <span className="font-medium text-gray-900">Files:</span>
+                  {a.files.map((f, i) => (
+                    <span key={i} className="inline-flex items-center ml-2">
+                      <a href={f.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">{f.name}</a>
+                      <button type="button" onClick={() => remAptFile(a.id, i)} className="ml-1 text-red-500 hover:text-red-700" title="Remove file">×</button>
+                      {i < a.files.length - 1 && ', '}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Appts;
