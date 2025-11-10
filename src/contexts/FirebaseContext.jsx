@@ -1,30 +1,29 @@
 import React, { createContext, useContext, useState } from 'react';
 import { initializeApp } from "firebase/app";
 
-// Firebase config
-const firebaseConfig = { 
-  apiKey: "AIzaSyC20URsFPYhlsOeHCIHP556tAwj5cZv-LI", 
-  authDomain: "dental-ffc44.firebaseapp.com", 
-  projectId: "dental-ffc44", 
-  storageBucket: "dental-ffc44.firebasestorage.app", 
-  messagingSenderId: "374518547185", 
-  appId: "1:374518547185:web:56f816df7f222898e15f50", 
-  measurementId: "G-MZQDCPKFDV" 
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyC20URsFPYhlsOeHCIHP556tAwj5cZv-LI",
+  authDomain: "dental-ffc44.firebaseapp.com",
+  projectId: "dental-ffc44",
+  storageBucket: "dental-ffc44.firebasestorage.app",
+  messagingSenderId: "374518547185",
+  appId: "1:374518547185:web:56f816df7f222898e15f50",
+  measurementId: "G-MZQDCPKFDV"
 };
 
 // Initialize Firebase
-initializeApp(firebaseConfig);
+initializeApp(firebaseConfig); // app is initialized but not assigned, avoids unused var
 
-// Firebase Context
+// Create the Firebase Context
 const FirebaseContext = createContext();
 
-// Provider
+// Firebase Provider Component
 export const FirebaseProvider = ({ children }) => {
   const [firebaseData, setFirebaseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Placeholder async functions
   const getData = async (path) => {
     try {
       setLoading(true);
