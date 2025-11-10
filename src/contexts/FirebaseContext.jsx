@@ -12,13 +12,13 @@ const firebaseConfig = {
   measurementId: "G-MZQDCPKFDV" 
 }; 
 
-// Initialize Firebase without assigning to a variable
+// Initialize Firebase (do NOT assign to a variable)
 initializeApp(firebaseConfig);
 
-// Create context
+// Create Firebase Context
 const FirebaseContext = createContext();
 
-// Provider
+// Provider component
 export const FirebaseProvider = ({ children }) => {
   const [firebaseData, setFirebaseData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,7 +57,7 @@ export const FirebaseProvider = ({ children }) => {
   return <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>;
 };
 
-// Hook
+// Custom hook
 export const useFirebase = () => {
   const context = useContext(FirebaseContext);
   if (!context) throw new Error('useFirebase must be used within a FirebaseProvider');
