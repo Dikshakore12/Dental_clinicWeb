@@ -1,12 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { initializeApp } from "firebase/app"; 
-// import { getAnalytics } from "firebase/analytics"; // Removed since unused
 
-// TODO: Add SDKs for Firebase products that you want to use 
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional 
+// Firebase configuration
 const firebaseConfig = { 
   apiKey: "AIzaSyC20URsFPYhlsOeHCIHP556tAwj5cZv-LI", 
   authDomain: "dental-ffc44.firebaseapp.com", 
@@ -17,24 +12,21 @@ const firebaseConfig = {
   measurementId: "G-MZQDCPKFDV" 
 }; 
 
-// Initialize Firebase 
-const app = initializeApp(firebaseConfig); 
-// const analytics = getAnalytics(app); // Commented out since unused
+// Initialize Firebase (no unused variable)
+initializeApp(firebaseConfig);
 
-// Create the Firebase Context
+// Create Firebase Context
 const FirebaseContext = createContext();
 
-// Firebase Provider Component
+// Firebase Provider
 export const FirebaseProvider = ({ children }) => {
   const [firebaseData, setFirebaseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Placeholder Firebase functions - these would be replaced with actual Firebase calls
   const getData = async (path) => {
     try {
       setLoading(true);
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
       setFirebaseData({ message: 'Firebase data loaded' });
       setLoading(false);
@@ -49,7 +41,6 @@ export const FirebaseProvider = ({ children }) => {
   const setData = async (path, data) => {
     try {
       setLoading(true);
-      // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 500));
       setFirebaseData(data);
       setLoading(false);
@@ -61,13 +52,7 @@ export const FirebaseProvider = ({ children }) => {
     }
   };
 
-  const value = {
-    firebaseData,
-    loading,
-    error,
-    getData,
-    setData
-  };
+  const value = { firebaseData, loading, error, getData, setData };
 
   return (
     <FirebaseContext.Provider value={value}>
@@ -76,11 +61,9 @@ export const FirebaseProvider = ({ children }) => {
   );
 };
 
-// Custom hook to use Firebase Context
+// Custom hook
 export const useFirebase = () => {
   const context = useContext(FirebaseContext);
-  if (!context) {
-    throw new Error('useFirebase must be used within a FirebaseProvider');
-  }
+  if (!context) throw new Error('useFirebase must be used within a FirebaseProvider');
   return context;
 };
