@@ -12,7 +12,7 @@ const firebaseConfig = {
   measurementId: "G-MZQDCPKFDV" 
 }; 
 
-// Initialize Firebase (no unused variable)
+// Initialize Firebase
 initializeApp(firebaseConfig);
 
 // Create Firebase Context
