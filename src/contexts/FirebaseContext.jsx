@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 import { initializeApp } from "firebase/app";
 
-// Firebase configuration
+// Firebase config
 const firebaseConfig = { 
   apiKey: "AIzaSyC20URsFPYhlsOeHCIHP556tAwj5cZv-LI", 
   authDomain: "dental-ffc44.firebaseapp.com", 
@@ -10,20 +10,21 @@ const firebaseConfig = {
   messagingSenderId: "374518547185", 
   appId: "1:374518547185:web:56f816df7f222898e15f50", 
   measurementId: "G-MZQDCPKFDV" 
-}; 
+};
 
-// Initialize Firebase (do NOT assign to a variable)
+// Initialize Firebase
 initializeApp(firebaseConfig);
 
-// Create Firebase Context
+// Firebase Context
 const FirebaseContext = createContext();
 
-// Provider component
+// Provider
 export const FirebaseProvider = ({ children }) => {
   const [firebaseData, setFirebaseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Placeholder async functions
   const getData = async (path) => {
     try {
       setLoading(true);
@@ -52,9 +53,11 @@ export const FirebaseProvider = ({ children }) => {
     }
   };
 
-  const value = { firebaseData, loading, error, getData, setData };
-
-  return <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>;
+  return (
+    <FirebaseContext.Provider value={{ firebaseData, loading, error, getData, setData }}>
+      {children}
+    </FirebaseContext.Provider>
+  );
 };
 
 // Custom hook
