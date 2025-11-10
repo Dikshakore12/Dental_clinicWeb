@@ -17,6 +17,14 @@ const getDoc = () => {
   };
 };
 
+const greet = (h, n) => {
+  const f = n.split(' ')[0];
+  if (h >= 5 && h < 12) return `Good Morning, Dr. ${f}`;
+  if (h >= 12 && h < 16) return `Good Afternoon, Dr. ${f}`;
+  if (h >= 16 && h < 20) return `Good Evening, Dr. ${f}`;
+  return `Good Night, Dr. ${f}`;
+};
+
 const getToday = () => {
   const apps = JSON.parse(localStorage.getItem('appointments') || '[]');
   const t = new Date();
@@ -53,6 +61,9 @@ const AdminDash = () => {
   const [now, setNow] = useState(new Date());
   const doc = getDoc();
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+
+  const today = getToday();
+  const greeting = greet(now.getHours(), doc.name);
 
   // Apply theme
   useEffect(() => {
@@ -111,27 +122,9 @@ const AdminDash = () => {
           <div className="relative z-10 max-w-7xl mx-auto">
             {tab === 'dashboard' && (
               <div className="space-y-8 dental-slide-up">
-                <div className="flex justify-between items-center mb-6">
-                  <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-dental-dark">
-                      Welcome, {doc.name.split(' ')[1] || doc.name}
-                    </h1>
-                    <p className="text-dental-secondary mt-1">{dStr}</p>
-                  </div>
-                  <div className="flex items-center space-x-2 bg-white p-2 rounded-dental shadow-dental">
-                    {isDay ? <span className="text-yellow-500"><FaSun /></span> : <span className="text-dental-primary"><FaMoon /></span>}
-                    <span className="font-medium">{now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
-                    <button
-                      onClick={toggleTheme}
-                      className="ml-2 p-1 rounded-full bg-dental-light hover:bg-dental-secondary text-dental-dark hover:text-white transition-colors"
-                      title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-                    >
-                      {theme === 'light' ? <FaMoon size={14} /> : <FaSun size={14} />}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Dashboard cards and recent activity can be added here as needed */}
+                <h2 className="text-xl font-bold mb-4">{greeting}</h2>
+                <p className="text-dental-secondary mb-6">{dStr}</p>
+                <p className="mb-4">Today's appointments: {today.length}</p>
               </div>
             )}
             {tab === 'patients' && <PList />}
