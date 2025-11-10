@@ -1,7 +1,6 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from '../contexts/UserContext';
-// import Kpi from '../components/kpis/KpiDashboard'; // Removed unused import
 import PList from '../components/patients/PatientList';
 import AList from '../components/appointments/AppointmentList';
 import Cal from '../components/calendar/CalendarView';
@@ -16,14 +15,6 @@ const getDoc = () => {
     role: 'Dentist',
     profilePic: 'https://img.freepik.com/free-photo/portrait-smiling-handsome-male-doctor-man_171337-5055.jpg?w=400'
   };
-};
-
-const greet = (h, n) => {
-  const f = n.split(' ')[0];
-  if (h >= 5 && h < 12) return `Good Morning, Dr. ${f}`;
-  if (h >= 12 && h < 16) return `Good Afternoon, Dr. ${f}`;
-  if (h >= 16 && h < 20) return `Good Evening, Dr. ${f}`;
-  return `Good Night, Dr. ${f}`;
 };
 
 const getToday = () => {
@@ -60,31 +51,22 @@ const AdminDash = () => {
   const nav = useNavigate();
   const [tab, setTab] = useState('dashboard');
   const [now, setNow] = useState(new Date());
-  const [today, setToday] = useState(getToday());
   const doc = getDoc();
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
   // Apply theme
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-    }
+    if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Toggle theme
   const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
   useEffect(() => {
     const i = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(i);
   }, []);
-
-  useEffect(() => {
-    if (tab === 'dashboard') setToday(getToday());
-  }, [tab]);
 
   const logout = () => {
     localStorage.removeItem('sessionUser');
@@ -95,8 +77,6 @@ const AdminDash = () => {
   const dStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   const h = now.getHours();
   const isDay = h >= 6 && h < 18;
-
-  // Removed unused variables: sAng, mAng, hAng, gr
 
   return (
     <div className="min-h-screen relative font-['Poppins'] dental-fade-in">
@@ -139,14 +119,8 @@ const AdminDash = () => {
                     <p className="text-dental-secondary mt-1">{dStr}</p>
                   </div>
                   <div className="flex items-center space-x-2 bg-white p-2 rounded-dental shadow-dental">
-                    {isDay ? (
-                      <span className="text-yellow-500"><FaSun /></span>
-                    ) : (
-                      <span className="text-dental-primary"><FaMoon /></span>
-                    )}
-                    <span className="font-medium">
-                      {now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                    {isDay ? <span className="text-yellow-500"><FaSun /></span> : <span className="text-dental-primary"><FaMoon /></span>}
+                    <span className="font-medium">{now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
                     <button
                       onClick={toggleTheme}
                       className="ml-2 p-1 rounded-full bg-dental-light hover:bg-dental-secondary text-dental-dark hover:text-white transition-colors"
@@ -157,8 +131,7 @@ const AdminDash = () => {
                   </div>
                 </div>
 
-                {/* Dashboard Cards and Recent Activity remain unchanged */}
-                {/* ... */}
+                {/* Dashboard cards and recent activity can be added here as needed */}
               </div>
             )}
             {tab === 'patients' && <PList />}
