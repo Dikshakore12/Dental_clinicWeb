@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
-import { initializeApp } from "firebase/app"; 
+import { initializeApp } from "firebase/app";
 
+// Firebase configuration
 const firebaseConfig = { 
   apiKey: "AIzaSyC20URsFPYhlsOeHCIHP556tAwj5cZv-LI", 
   authDomain: "dental-ffc44.firebaseapp.com", 
@@ -11,11 +12,13 @@ const firebaseConfig = {
   measurementId: "G-MZQDCPKFDV" 
 }; 
 
-// Initialize Firebase without assigning to variable
+// Initialize Firebase without assigning to a variable
 initializeApp(firebaseConfig);
 
+// Create context
 const FirebaseContext = createContext();
 
+// Provider
 export const FirebaseProvider = ({ children }) => {
   const [firebaseData, setFirebaseData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,6 +57,7 @@ export const FirebaseProvider = ({ children }) => {
   return <FirebaseContext.Provider value={value}>{children}</FirebaseContext.Provider>;
 };
 
+// Hook
 export const useFirebase = () => {
   const context = useContext(FirebaseContext);
   if (!context) throw new Error('useFirebase must be used within a FirebaseProvider');
