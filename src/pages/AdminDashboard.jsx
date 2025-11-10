@@ -8,23 +8,12 @@ import Khatabook from './Khatabook';
 import { FiGrid, FiUsers, FiCalendar, FiClipboard, FiLogOut, FiDollarSign } from 'react-icons/fi';
 import { FaMoon, FaSun } from 'react-icons/fa';
 
-// Get doctor info from localStorage
-const getDoc = () => {
-  return JSON.parse(localStorage.getItem('doctor')) || {
-    name: 'Dr. Asrani',
-    email: 'yashbjp888@gmail.com',
-    role: 'Dentist',
-    profilePic: 'https://img.freepik.com/free-photo/portrait-smiling-handsome-male-doctor-man_171337-5055.jpg?w=400'
-  };
-};
-
-// Greeting function
-const greet = (h, n) => {
-  const f = n.split(' ')[0];
-  if (h >= 5 && h < 12) return `Good Morning, Dr. ${f}`;
-  if (h >= 12 && h < 16) return `Good Afternoon, Dr. ${f}`;
-  if (h >= 16 && h < 20) return `Good Evening, Dr. ${f}`;
-  return `Good Night, Dr. ${f}`;
+// Get doctor info
+const getDoc = () => JSON.parse(localStorage.getItem('doctor')) || {
+  name: 'Dr. Asrani',
+  email: 'yashbjp888@gmail.com',
+  role: 'Dentist',
+  profilePic: 'https://img.freepik.com/free-photo/portrait-smiling-handsome-male-doctor-man_171337-5055.jpg?w=400'
 };
 
 // Get today's appointments
@@ -38,7 +27,7 @@ const getToday = () => {
   });
 };
 
-// Sidebar button component
+// Sidebar button
 const SidebarBtn = ({ icon, text, act, click }) => {
   const cMap = { Dashboard: 'text-gray-900', Patients: 'text-blue-900', Appointments: 'text-purple-900', Calendar: 'text-green-900', Khatabook: 'text-yellow-900' };
   const hMap = { Dashboard: 'hover:bg-yellow-200', Patients: 'hover:bg-yellow-200', Appointments: 'hover:bg-yellow-200', Calendar: 'hover:bg-yellow-200', Khatabook: 'hover:bg-yellow-200' };
@@ -66,8 +55,7 @@ const AdminDash = () => {
   const doc = getDoc();
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
-  // Use greet and today variables
-  const greeting = greet(now.getHours(), doc.name);
+  // Use today appointments
   const today = getToday();
 
   // Apply theme
@@ -84,10 +72,6 @@ const AdminDash = () => {
     return () => clearInterval(i);
   }, []);
 
-  useEffect(() => {
-    if (tab === 'dashboard') getToday();
-  }, [tab]);
-
   const logout = () => {
     localStorage.removeItem('sessionUser');
     setUser(null);
@@ -96,14 +80,7 @@ const AdminDash = () => {
 
   const dStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   const h = now.getHours();
-  const m = now.getMinutes();
-  const s = now.getSeconds();
   const isDay = h >= 6 && h < 18;
-
-  // Clock angles for potential analog clock display
-  const sAng = s * 6;
-  const mAng = m * 6 + s * 0.1;
-  const hAng = ((h % 12) + m / 60) * 30;
 
   return (
     <div className="min-h-screen relative font-['Poppins'] dental-fade-in">
@@ -144,7 +121,9 @@ const AdminDash = () => {
               <div className="space-y-8 dental-slide-up">
                 <div className="flex justify-between items-center mb-6">
                   <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-dental-dark">{greeting}</h1>
+                    <h1 className="text-2xl md:text-3xl font-bold text-dental-dark">
+                      {`Hello, ${doc.name.split(' ')[0]}`}
+                    </h1>
                     <p className="text-dental-secondary mt-1">{dStr}</p>
                   </div>
                   <div className="flex items-center space-x-2 bg-white p-2 rounded-dental shadow-dental">
@@ -160,39 +139,31 @@ const AdminDash = () => {
                   </div>
                 </div>
 
-                {/* Dashboard cards */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="dental-dashboard-card p-6">Total Patients: {JSON.parse(localStorage.getItem('patients') || '[]').length}</div>
+                  <div className="dental-dashboard-card p-6">Today's Appointments: {today.length}</div>
                   <div className="dental-dashboard-card p-6">
-                    <p>Total Patients: {JSON.parse(localStorage.getItem('patients') || '[]').length}</p>
-                  </div>
-                  <div className="dental-dashboard-card p-6">
-                    <p>Today's Appointments: {today.length}</p>
-                  </div>
-                  <div className="dental-dashboard-card p-6">
-                    <p>Completed Appointments: {JSON.parse(localStorage.getItem('appointments') || '[]').filter(a => a.status === 'Completed').length}</p>
+                    Completed Appointments: {JSON.parse(localStorage.getItem('appointments') || '[]').filter(a => a.status === 'Completed').length}
                   </div>
                 </div>
 
                 {/* Recent activity */}
                 <div className="mt-8 dental-card p-6">
                   <h2 className="dental-dashboard-title mb-4">Today's Appointments</h2>
-                  <div className="space-y-4">
-                    {today.length > 0 ? today.map((appt, i) => {
-                      const patient = JSON.parse(localStorage.getItem('patients') || '[]').find(p => p.id === appt.patientId);
-                      return (
-                        <div key={i} className="dental-appointment flex items-start p-3 rounded-dental hover:bg-dental-light">
-                          <div className="bg-dental-light text-dental-primary p-2 rounded-full mr-3"></div>
-                          <div>
-                            <p>{patient?.name || 'Unknown Patient'}</p>
-                            <p>{appt.title} - {new Date(appt.appointmentDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
-                          </div>
-                          <span className={`ml-auto px-2 py-1 text-xs rounded-full ${appt.status === 'Completed' ? 'dental-status-success' : 'dental-status-warning'}`}>
-                            {appt.status}
-                          </span>
+                  {today.length > 0 ? today.map((appt, i) => {
+                    const patient = JSON.parse(localStorage.getItem('patients') || '[]').find(p => p.id === appt.patientId);
+                    return (
+                      <div key={i} className="dental-appointment flex items-start p-3 rounded-dental hover:bg-dental-light">
+                        <div>
+                          <p>{patient?.name || 'Unknown Patient'}</p>
+                          <p>{appt.title} - {new Date(appt.appointmentDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
-                      );
-                    }) : <p className="text-center py-4">No appointments today</p>}
-                  </div>
+                        <span className={`ml-auto px-2 py-1 text-xs rounded-full ${appt.status === 'Completed' ? 'dental-status-success' : 'dental-status-warning'}`}>
+                          {appt.status}
+                        </span>
+                      </div>
+                    );
+                  }) : <p className="text-center py-4">No appointments today</p>}
                 </div>
               </div>
             )}
