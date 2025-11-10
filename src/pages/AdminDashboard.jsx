@@ -55,7 +55,7 @@ const AdminDash = () => {
   const doc = getDoc();
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
 
-  // Use today appointments
+  // Use today appointments (ESLint safe)
   const today = getToday();
 
   // Apply theme
@@ -139,6 +139,7 @@ const AdminDash = () => {
                   </div>
                 </div>
 
+                {/* Dashboard stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="dental-dashboard-card p-6">Total Patients: {JSON.parse(localStorage.getItem('patients') || '[]').length}</div>
                   <div className="dental-dashboard-card p-6">Today's Appointments: {today.length}</div>
