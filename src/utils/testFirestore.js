@@ -1,5 +1,5 @@
 // Test Firestore connection and operations
-import { getFirestore, collection, addDoc, getDocs, doc, setDoc, getDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc } from "firebase/firestore";
 import { initializeApp } from "firebase/app";
 
 const firebaseConfig = { 

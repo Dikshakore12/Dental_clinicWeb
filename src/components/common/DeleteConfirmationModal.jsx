@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiAlertTriangle, FiX, FiTrash2 } from 'react-icons/fi';
+import { FiAlertTriangle, FiTrash2 } from 'react-icons/fi';
 
 const DeleteConfirmationModal = ({ 
   isOpen, 
