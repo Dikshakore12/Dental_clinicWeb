@@ -1,5 +1,5 @@
 import React from 'react';
-import { FiX, FiUser, FiPhone, FiMail, FiCalendar, FiClock, FiFileText, FiFile } from 'react-icons/fi';
+import { FiX, FiUser, FiCalendar, FiFileText, FiFile } from 'react-icons/fi';
 
 const ViewAppointmentModal = ({ appointment, onClose }) => {
   if (!appointment) return null;

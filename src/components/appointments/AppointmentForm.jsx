@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiX, FiUser, FiPhone, FiMail, FiCalendar, FiClock, FiFileText, FiPlus, FiTrash2 } from 'react-icons/fi';
+import { FiUser, FiPhone, FiMail, FiCalendar, FiClock, FiFileText, FiPlus, FiTrash2 } from 'react-icons/fi';
 
 const AppointmentForm = ({ appointment, patients, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState({

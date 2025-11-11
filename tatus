@@ -1,0 +1,5 @@
+warning: in the working copy of 'src/components/common/DeleteConfirmationModal.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/utils/testFirestore.js', LF will be replaced by CRLF the next time Git touches it
+src/components/common/DeleteConfirmationModal.jsx
+src/pages/AdminDashboard.jsx
+src/utils/testFirestore.js
