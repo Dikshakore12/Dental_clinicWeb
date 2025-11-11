@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
 import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
 
 // Firebase config
 const firebaseConfig = { 
@@ -12,26 +13,27 @@ const firebaseConfig = {
   measurementId: "G-MZQDCPKFDV" 
 };
 
-// Initialize Firebase
-initializeApp(firebaseConfig);
+// Initialize Firebase + Firestore
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
 // Firebase Context
 const FirebaseContext = createContext();
 
-// Provider
 export const FirebaseProvider = ({ children }) => {
   const [firebaseData, setFirebaseData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Placeholder async functions
-  const getData = async (path) => {
+  // Read data
+  const getData = async (collectionName) => {
     try {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setFirebaseData({ message: 'Firebase data loaded' });
+      const querySnapshot = await getDocs(collection(db, collectionName));
+      const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setFirebaseData(data);
       setLoading(false);
-      return { success: true };
+      return { success: true, data };
     } catch (err) {
       setError(err.message);
       setLoading(false);
@@ -39,11 +41,11 @@ export const FirebaseProvider = ({ children }) => {
     }
   };
 
-  const setData = async (path, data) => {
+  // Write data
+  const setData = async (collectionName, data) => {
     try {
       setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      setFirebaseData(data);
+      await addDoc(collection(db, collectionName), data);
       setLoading(false);
       return { success: true };
     } catch (err) {
@@ -61,8 +63,4 @@ export const FirebaseProvider = ({ children }) => {
 };
 
 // Custom hook
-export const useFirebase = () => {
-  const context = useContext(FirebaseContext);
-  if (!context) throw new Error('useFirebase must be used within a FirebaseProvider');
-  return context;
-};
+export const useFirebase = () => useContext(FirebaseContext);

@@ -6,6 +6,7 @@ import AList from '../components/appointments/AppointmentList';
 import Cal from '../components/calendar/CalendarView';
 import Khatabook from './Khatabook';
 import { FiGrid, FiUsers, FiCalendar, FiClipboard, FiLogOut, FiDollarSign } from 'react-icons/fi';
+import { FaMoon, FaSun } from 'react-icons/fa';
 
 // Get doctor info
 const getDoc = () => JSON.parse(localStorage.getItem('doctor')) || {
@@ -56,12 +57,19 @@ const AdminDash = () => {
   const nav = useNavigate();
   const [tab, setTab] = useState('dashboard');
   const [now, setNow] = useState(new Date());
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
   const doc = getDoc();
 
   const today = getToday(); // used, ESLint safe
   const greeting = greet(now.getHours(), doc.name); // used in JSX
 
+  useEffect(() => {
+    if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
+    localStorage.setItem('theme', theme);
+  }, [theme]);
 
+  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
 
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000);
